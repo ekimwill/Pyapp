@@ -1,17 +1,15 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from utils import *
 
 
-
-st.set_page_config(page_title="WEB Page",
-                    page_icon="bar_chart:",
+st.set_page_config(page_title="Solar Radiation and Temperature Analysis",
+                    page_icon=":sunny:",
                     layout="wide"
                     )
 
-
-
-
+# Load data
 @st.cache_data
 def load_data(path:str):
     data = pd.read_csv(path)
@@ -19,37 +17,49 @@ def load_data(path:str):
 
 
 with st.sidebar:
-    uploadfile= st.file_uploader("Choose a file", type=["csv","xlsx"])
+    uploadfiles = st.file_uploader("Upload files", type=["csv", "xlsx"], accept_multiple_files=True)
 
-    if uploadfile is None:
-        st.info("upload file through config")
+    if not uploadfiles:
+        st.info("Please upload files.")
         st.stop()
 
-with st.sidebar:
-    uploadfile2 = st.file_uploader("Choose another file", type=["csv","xlsx"])
+dfs = [load_data(uploadfile) for uploadfile in uploadfiles]
 
-    if uploadfile is None:
-        st.info("upload file through config")
-        st.stop()
+tabs = st.sidebar.radio("Select Analysis", ["Data Information", "Visualize Correlation", 
+                                            "Calculate Z Score", "Time Series Analysis",
+                                            "Wind Speed and Wind Direction", "Temperature Analysis",
+                                            "Box Plots", "Scatter Plots"])
 
-sales_data=load_data(uploadfile)  
-another_data =load_data(uploadfile2)   
-# st.dataframe(sales_data)
-
-c1,c2,c3=st.columns([1,1,1])
-
-with c1.expander("Env Data"):
-    st.write(sales_data)
-
-with c2.expander("another Data"):
-    st.write(another_data)
-
-
-
-with c1.expander("data"):
-    st.dataframe(
-        df,
-        column_config={
-            "Year": st.column_config.NumberColumn(format="%d")
-        }
-    )
+if tabs == "Data Information":
+    for i, df in enumerate(dfs):
+        st.subheader(f"File {i+1} - Data Information")
+        st.write(data_info(df))
+elif tabs == "Visualize Correlation":
+    for i, df in enumerate(dfs):
+        st.subheader(f"File {i+1} - Visualize Correlation")
+        numeric_cols = df.select_dtypes(include=['float64', 'int64'])
+        st.pyplot(visualize_correlation(numeric_cols))
+elif tabs == "Calculate Z Score":
+    for i, df in enumerate(dfs):
+        st.subheader(f"File {i+1} - Calculate Z Score")
+        st.write(Calculate_Z_Score(df))
+elif tabs == "Time Series Analysis":
+    for i, df in enumerate(dfs):
+        st.subheader(f"File {i+1} - Time Series Analysis")
+        TimeStamp(df)
+elif tabs == "Wind Speed and Wind Direction":
+    for i, df in enumerate(dfs):
+        st.subheader(f"File {i+1} - Wind Speed and Wind Direction")
+        st.write(wind_speed_and_wind_direction_over_time(df))
+elif tabs == "Temperature Analysis":
+    for i, df in enumerate(dfs):
+        st.subheader(f"File {i+1} - Temperature Analysis")
+        generate_histograms(df)
+elif tabs == "Box Plots":
+    for i, df in enumerate(dfs):
+        st.subheader(f"File {i+1} - Box Plots")
+        generate_box_plots(df)
+elif tabs == "Scatter Plots":
+    for i, df in enumerate(dfs):
+        st.subheader(f"File {i+1} - Scatter Plots")
+        generate_scatter_plots(df)
